@@ -1,0 +1,13 @@
+{
+  "name": "multiai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal desktop app that embeds ChatGPT, Gemini, Grok, and Claude in one window and broadcasts a single prompt to all four.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^31.0.0"
+  }
+}
