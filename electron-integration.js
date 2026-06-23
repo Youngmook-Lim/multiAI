@@ -29,6 +29,7 @@
   var enabled = { chatgpt: true, gemini: true, grok: true, claude: true };
   var zoomLabels = {}; // paneId -> zoom-% badge element
   var idToPane = {};   // guest webContents id -> paneId
+  var errored = {};    // paneId -> did the current load cycle fail?
 
   // Styles for the zoom-% badge shown in each pane header.
   var zoomStyle = document.createElement('style');
@@ -84,9 +85,27 @@
       zoomLabels[id] = badge;
     }
 
-    wv.addEventListener('did-start-loading', function () { window.setPaneStatus(id, 'sending'); });
+    wv.addEventListener('did-start-loading', function () {
+      errored[id] = false;
+      window.setPaneStatus(id, 'sending');
+    });
+    // 'loaded' is driven by did-stop-loading — the partner of did-start-loading,
+    // NOT dom-ready. dom-ready only fires for a fresh document, so an SPA in-app
+    // navigation would start loading (→ sending) with no dom-ready to clear it,
+    // leaving the dot stuck on "sending". did-stop-loading always pairs up.
+    wv.addEventListener('did-stop-loading', function () {
+      if (!errored[id]) window.setPaneStatus(id, 'loaded');
+    });
+    wv.addEventListener('did-fail-load', function (e) {
+      // Only a MAIN-frame failure means the pane itself failed. Ignore sub-
+      // resource failures (ads/telemetry) and ERR_ABORTED (-3), which fire
+      // routinely during normal in-page navigation.
+      if (e.isMainFrame && e.errorCode !== -3) {
+        errored[id] = true;
+        window.setPaneStatus(id, 'error');
+      }
+    });
     wv.addEventListener('dom-ready', function () {
-      window.setPaneStatus(id, 'loaded');
       try { idToPane[wv.getWebContentsId()] = id; } catch (e) { /* not attached yet */ }
       // Chromium restores each origin's zoom from the persist: partition, so the
       // real zoom on load may not be 100%. Sync the badge to the actual factor
@@ -100,10 +119,6 @@
         };
         if (f && typeof f.then === 'function') { f.then(apply); } else { apply(f); }
       } catch (e) { /* getZoomFactor unavailable — leave default */ }
-    });
-    wv.addEventListener('did-fail-load', function (e) {
-      // -3 == ERR_ABORTED, fired routinely on in-page navigations; ignore it.
-      if (e.errorCode !== -3) window.setPaneStatus(id, 'error');
     });
   });
 
