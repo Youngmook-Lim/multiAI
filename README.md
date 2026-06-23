@@ -14,6 +14,10 @@ npm install      # installs Electron locally (nothing global)
 npm start        # launches the app
 ```
 
+**Or just double-click `MultiAI.command`** in Finder — it installs deps on first
+run if needed and launches the app, no terminal typing required. To launch it
+from the Dock, drag `MultiAI.command` onto the right-hand side of the Dock.
+
 On **first launch** every pane will show each site's login screen. Log into each
 one once — sessions persist across restarts (each site uses its own
 `persist:<site>` partition), so you won't need to log in again unless you clear
