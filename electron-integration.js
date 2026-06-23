@@ -27,6 +27,17 @@
   var PANES = ['chatgpt', 'gemini', 'grok', 'claude'];
   var webviews = {};
   var enabled = { chatgpt: true, gemini: true, grok: true, claude: true };
+  var zoomLabels = {}; // paneId -> zoom-% badge element
+  var idToPane = {};   // guest webContents id -> paneId
+
+  // Styles for the zoom-% badge shown in each pane header.
+  var zoomStyle = document.createElement('style');
+  zoomStyle.textContent =
+    '.zoom-pct{font:500 11px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text-faint);' +
+    'background:rgba(255,255,255,.03);border:1px solid var(--border-soft);border-radius:6px;' +
+    'padding:2px 6px;min-width:42px;text-align:center;cursor:pointer;}' +
+    '.zoom-pct:hover{color:var(--text);border-color:var(--border);}';
+  document.head.appendChild(zoomStyle);
 
   // ---- 1) Mount a <webview> into each pane body, replacing the placeholder ----
   PANES.forEach(function (id) {
@@ -51,8 +62,45 @@
     host.appendChild(wv);
     webviews[id] = wv;
 
+    // Add a clickable zoom-% badge to this pane's header. Each forEach iteration
+    // has its own `wv`/`badge`, so the click closure binds to the right pane.
+    var section = host.closest('.pane');
+    var actions = section && section.querySelector('.pane-actions');
+    if (actions) {
+      var badge = document.createElement('button');
+      badge.type = 'button';
+      badge.className = 'zoom-pct';
+      badge.textContent = '100%';
+      badge.title = 'Zoom: Ctrl +/–/0 · click to reset to 100%';
+      badge.addEventListener('click', function () {
+        wv.setZoomFactor(1);
+        badge.textContent = '100%';
+        // Aim keyboard zoom at THIS pane: clicking the badge (host chrome) would
+        // otherwise leave focus off the webview, so Ctrl+/- would hit whatever
+        // guest was focused last (e.g. Claude). Re-focus this pane's webview.
+        wv.focus();
+      });
+      actions.insertBefore(badge, actions.firstChild);
+      zoomLabels[id] = badge;
+    }
+
     wv.addEventListener('did-start-loading', function () { window.setPaneStatus(id, 'sending'); });
-    wv.addEventListener('dom-ready', function () { window.setPaneStatus(id, 'loaded'); });
+    wv.addEventListener('dom-ready', function () {
+      window.setPaneStatus(id, 'loaded');
+      try { idToPane[wv.getWebContentsId()] = id; } catch (e) { /* not attached yet */ }
+      // Chromium restores each origin's zoom from the persist: partition, so the
+      // real zoom on load may not be 100%. Sync the badge to the actual factor
+      // instead of leaving the hardcoded default. (Re-runs on reloads too.)
+      try {
+        var f = wv.getZoomFactor();
+        var apply = function (val) {
+          if (typeof val === 'number' && zoomLabels[id]) {
+            zoomLabels[id].textContent = Math.round(val * 100) + '%';
+          }
+        };
+        if (f && typeof f.then === 'function') { f.then(apply); } else { apply(f); }
+      } catch (e) { /* getZoomFactor unavailable — leave default */ }
+    });
     wv.addEventListener('did-fail-load', function (e) {
       // -3 == ERR_ABORTED, fired routinely on in-page navigations; ignore it.
       if (e.errorCode !== -3) window.setPaneStatus(id, 'error');
@@ -128,6 +176,14 @@
       }
     }
   };
+
+  // Reflect keyboard zoom (handled in main.js) in the right pane's header badge.
+  if (window.multiAI && window.multiAI.onZoom) {
+    window.multiAI.onZoom(function (data) {
+      var pane = idToPane[data.webContentsId];
+      if (pane && zoomLabels[pane]) zoomLabels[pane].textContent = data.percent + '%';
+    });
+  }
 
   console.log('[multiai] Electron integration ready:', Object.keys(webviews).join(', '));
 })();

@@ -28,6 +28,33 @@ function createWindow() {
 
   win.loadFile('renderer.html');
 
+  // Take ownership of zoom for the embedded sites. We can't rely on Chromium's
+  // built-in Ctrl+/- shortcut here: a focused <webview> delivers key events to
+  // the guest site first, and some sites (ChatGPT/Gemini/Grok) swallow +/- for
+  // their own shortcuts — so zoom worked inconsistently (Claude happened to let
+  // it through). before-input-event fires BEFORE the guest page sees the key, so
+  // we intercept it and zoom that pane's webContents directly and reliably.
+  win.webContents.on('did-attach-webview', (_event, contents) => {
+    contents.on('before-input-event', (event, input) => {
+      if (input.type !== 'keyDown') return;
+      if (!(input.control || input.meta)) return; // Ctrl (or Cmd on macOS)
+
+      let factor = contents.getZoomFactor();
+      switch (input.key) {
+        case '=': case '+': factor += 0.1; break;  // zoom in  (+10%)
+        case '-': case '_': factor -= 0.1; break;  // zoom out (-10%)
+        case '0':           factor = 1;   break;   // reset to 100%
+        default: return;                           // not a zoom key — leave it alone
+      }
+      // snap to a clean 10% step and clamp to 25%–500%
+      factor = Math.max(0.25, Math.min(Math.round(factor * 10) / 10, 5));
+      contents.setZoomFactor(factor);
+      event.preventDefault(); // stop the site from also acting on the key
+      // tell the renderer so it can show the % in that pane's header badge
+      win.webContents.send('multiai:zoom', { webContentsId: contents.id, percent: Math.round(factor * 100) });
+    });
+  });
+
   win.on('closed', () => { win = null; });
 }
 

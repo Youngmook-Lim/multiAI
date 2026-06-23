@@ -9,4 +9,8 @@ contextBridge.exposeInMainWorld('multiAI', {
   // Clear one site's persisted session (cookies/storage for its partition).
   // Resolves with { ok, partition }.
   clearSession: (paneId) => ipcRenderer.invoke('multiai:clear-session', paneId),
+
+  // Subscribe to zoom-% updates pushed from main when a pane is zoomed via
+  // the keyboard. callback receives { webContentsId, percent }.
+  onZoom: (callback) => ipcRenderer.on('multiai:zoom', (_event, data) => callback(data)),
 });
