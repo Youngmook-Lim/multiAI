@@ -67,10 +67,12 @@ app.whenReady().then(() => {
   });
 });
 
-// macOS convention: keep the app alive when all windows are closed (stays in the
-// dock); quit outright on Windows/Linux.
+// Quit when the window is closed — including on macOS. This is a local dev tool
+// launched via `npm start`, so closing the window should end the process instead
+// of leaving the app resident in the dock (the usual macOS convention). Use
+// Cmd+Q or just close the window; either way `npm start` exits.
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  app.quit();
 });
 
 // ---- IPC: clear a single site's persisted session ----------------------------
