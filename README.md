@@ -1,164 +1,119 @@
 # MultiAI
 
-A personal macOS desktop app that puts **ChatGPT, Gemini, Grok, and Claude** in one
-window. Type a prompt once and it's sent to all four at the same time; keep chatting and
-each conversation continues in its own pane. You log into each site once and stay logged
-in.
+A desktop app for macOS that runs **ChatGPT, Gemini, Grok, and Claude** side by side in a
+single window. A prompt typed in the shared composer is sent to all four services at once,
+and each pane keeps its own ongoing conversation. You sign in to each service once;
+sessions persist between launches.
 
-> Personal, local tool for macOS — not for distribution.
+Built with Electron. This is a personal, local tool — it is not packaged or distributed.
 
----
+## Requirements
 
-## Getting started (first time — non-technical friendly)
+- macOS
+- [Node.js](https://nodejs.org) 18 or newer (the LTS installer is recommended)
 
-You do steps 1–3 **once**. After that, launching the app is a single double-click.
+To confirm Node.js is installed, run `node --version` in Terminal.
 
-**What you need:** a Mac, about 10 minutes, and your Mac password (for the installer).
+## Installation
 
-### Step 1 — Install Node.js (the engine the app runs on)
-1. Go to **https://nodejs.org**
-2. Click the button labeled **"LTS"** (it also says *"Recommended for Most Users"*). This
-   downloads an installer file ending in `.pkg`.
-3. Open that file from your **Downloads** folder and click through the installer:
-   **Continue → Agree → Install**, then enter your Mac password.
-4. That's it — there's no app to open, it just installs in the background.
+Clone the repository and install dependencies:
 
-### Step 2 — Download MultiAI
-1. Go to **https://github.com/Youngmook-Lim/multiAI**
-2. Click the green **`< > Code`** button, then **"Download ZIP"**.
-3. Open your **Downloads** folder and double-click the ZIP to unzip it. You'll get a
-   folder named **`multiAI-main`**.
-4. Move that folder somewhere easy to find, like **Documents**.
-
-### Step 3 — One-time setup (copy & paste)
-1. Open the **Terminal** app: press **⌘ + Space**, type **Terminal**, press **Return**.
-2. In the Terminal window, type `cd ` (the letters **c**, **d**, then a **space**) — then
-   **drag the `multiAI-main` folder from Finder onto the Terminal window** and press
-   **Return**. (This points Terminal at the app's folder, so you don't have to type the
-   path.)
-3. Copy the line below, paste it into Terminal, and press **Return**:
-   ```
-   npm install && chmod +x MultiAI.command
-   ```
-   Wait about a minute while it finishes (lots of scrolling text is normal). When the
-   prompt reappears, it's done — you can close Terminal.
-
-### Step 4 — Launch the app
-Open the `multiAI-main` folder and **double-click `MultiAI.command`**.
-
-- **First time only:** macOS may say the file is *"from an unidentified developer"* or
-  can't be verified. If so, **right-click** (or Control-click) `MultiAI.command` →
-  **Open** → **Open**. You only do this once.
-- A small Terminal window appears while the app is running and closes itself a few seconds
-  after you quit the app — that's normal.
-- **Tip:** drag `MultiAI.command` onto the right-hand side of the Dock for one-click
-  launching.
-
-### Step 5 — Log in (first launch only)
-The four panes show each site's login page. Log into each one. Your logins are remembered,
-so you won't have to sign in again next time.
-
----
-
-## Using the app
-- **Send to all four:** type in the bar at the bottom and press **Enter** (Shift+Enter for
-  a new line). Your message goes to every enabled pane at once.
-- **Zoom one pane:** click the pane, then **Ctrl +** / **Ctrl −** to zoom, **Ctrl 0** to
-  reset (⌘ also works). Each pane shows its zoom % in its header — click that % to snap it
-  back to 100%.
-- **Reload / expand a pane:** use the buttons in that pane's header.
-- **Settings (gear icon, top-right):** turn individual sites on/off, or **Clear session**
-  to log out of one site.
-- **Quit:** just close the window — the app fully quits.
-
-### Updating to a newer version
-Re-download the ZIP (Step 2), replace your old folder, and repeat Step 3. (If you used
-`git clone` instead, run `git pull`.)
-
----
-
-## Troubleshooting
-- **Double-clicking `MultiAI.command` opens a text editor instead of running it.** The file
-  lost its "executable" flag (common with ZIP downloads). Redo the `chmod +x MultiAI.command`
-  part of Step 3.
-- **Terminal says `npm: command not found`.** Node.js isn't installed yet, or Terminal was
-  already open when you installed it. Finish Step 1, then quit and reopen Terminal.
-- **A site won't stay logged in (usually Gemini).** Google sometimes blocks sign-in inside
-  embedded windows (*"this browser may not be secure"*). That's a Google restriction, not a
-  bug here.
-- **A prompt didn't get typed into a site.** The sites occasionally change their page layout;
-  see *Per-site selectors* below to fix it.
-
----
-
-## For developers
-
-### Run it directly
 ```bash
-npm install      # installs Electron locally (nothing global)
-npm start        # launches the app
+git clone https://github.com/Youngmook-Lim/multiAI.git
+cd multiAI
+npm install
 ```
-(`MultiAI.command` just wraps these two steps and auto-closes its Terminal window.)
 
-### How it works
-- `main.js` — creates one `BrowserWindow` (`contextIsolation: true`,
-  `nodeIntegration: false`, `webviewTag: true`) and loads `renderer.html`. **Quits when the
-  window is closed** (including on macOS). Also intercepts the per-pane zoom keys
-  (`Ctrl +/-/0`) before the embedded sites can swallow them, and handles the one privileged
-  action — clearing a site's stored session — over IPC.
-- `preload.js` — exposes exactly two things to the page via `contextBridge`:
-  `window.multiAI.clearSession(paneId)` and a zoom-update subscription. No raw Node reaches
-  the renderer or the embedded sites.
-- `renderer.html` — the UI shell (built separately). Mostly untouched; six `<script>` tags
-  were appended at the bottom to load the integration. It stays runnable in a plain browser
-  (the integration detects "not Electron" and no-ops, leaving the placeholders visible).
-- `electron-integration.js` — replaces each pane's placeholder with a persistent
-  `<webview>`, then wires the shell's hooks (`onPromptSubmit`, `onPaneReload`,
-  `onPaneExpand`, `onSettingsChange`), the status dots (`setPaneStatus`), and the zoom-%
-  badges.
-- `adapters/*.js` — one module per site, holding that site's URL, partition, and **CSS
-  selectors** for its message box and send button. `adapters/_shared.js` holds the generic
-  "set text + send" logic shared by all four.
+Alternatively, download the repository as a ZIP from GitHub and unzip it, then run
+`npm install` inside the folder. Note that ZIP archives do not preserve the executable
+flag on `MultiAI.command`; if you plan to use the launcher (below), run
+`chmod +x MultiAI.command` once.
 
-The four webviews are created once and **never removed from the DOM** — expand and the
-narrow-window tab switcher only toggle CSS `display`, so live login sessions are never torn
-down. Each site uses its own `persist:<site>` partition, which is why logins survive
-restarts.
+## Usage
 
-### ⚠️ Per-site selectors (the fragile part)
-Injecting into someone else's web app means guessing the DOM. The selectors in
-`adapters/*.js` are **best-effort guesses** and **will break** when a site redesigns.
-They're isolated in one small file per site so you can fix them independently. Each adapter
-exposes:
+Start the app from the project directory:
 
-- `input` — ordered list of candidate selectors for the message box (first **visible** match
-  wins).
-- `send` — candidate selectors for the send button (first visible match wins; if none is
-  found/enabled, the injector falls back to dispatching **Enter**).
+```bash
+npm start
+```
 
-| Site | File | Best-guess message box | Best-guess send button |
-|------|------|------------------------|------------------------|
-| ChatGPT | `adapters/chatgpt.js` | `#prompt-textarea` (contenteditable) | `button[data-testid="send-button"]` |
+For convenience you can instead double-click **`MultiAI.command`** in Finder, which runs
+the steps above and launches the app; drag it onto the Dock for quick access. Because the
+script is unsigned, the first launch may require right-clicking it and choosing **Open** to
+clear macOS Gatekeeper.
+
+On first launch, each pane shows the corresponding service's sign-in page. Sign in to each
+one; logins are stored per service and persist across restarts.
+
+Day-to-day controls:
+
+- **Send to all services** — type in the bottom composer and press Enter (Shift+Enter
+  inserts a newline). The prompt is delivered to every enabled pane.
+- **Zoom a pane** — focus a pane, then use `Ctrl +` / `Ctrl -` to zoom and `Ctrl 0` to
+  reset (the ⌘ equivalents also work). Each pane displays its current zoom level in its
+  header; clicking that value resets it to 100%.
+- **Reload or expand a pane** — use the controls in each pane's header.
+- **Settings** — the gear icon opens a drawer to enable/disable individual services or
+  clear a service's stored session.
+- **Quit** — closing the window quits the app.
+
+## Configuration: per-site selectors
+
+Sending a prompt requires locating each site's message box and send button in the DOM, so
+the app uses a small adapter per service. Because these target third-party markup, the
+selectors can break when a site changes its layout. Each adapter lives in its own file
+under `adapters/` and exposes two ordered lists of candidate selectors — `input` for the
+message box and `send` for the send button — where the first visible match is used. If no
+send button is found, the injector falls back to dispatching Enter.
+
+| Service | File | Message box | Send button |
+|---------|------|-------------|-------------|
+| ChatGPT | `adapters/chatgpt.js` | `#prompt-textarea` | `button[data-testid="send-button"]` |
 | Gemini  | `adapters/gemini.js`  | `rich-textarea .ql-editor` | `button[aria-label*="Send"]` |
 | Grok    | `adapters/grok.js`    | `textarea` | `button[type="submit"]` |
 | Claude  | `adapters/claude.js`  | `div.ProseMirror[contenteditable="true"]` | `button[aria-label="Send message"]` |
 
-To correct one: open that pane, right-click the message box → **Inspect** (DevTools opens
-for the embedded site), copy a reliable selector, and put it first in that adapter's `input`
-array. Do the same for the send button → `send`. No rebuild needed — just relaunch the app.
+To update a selector, open the relevant pane, inspect the message box or send button, and
+place a reliable selector first in that adapter's list. Changes take effect on the next
+launch; no build step is required.
 
-The injector handles two input types automatically: rich contenteditable editors
-(ProseMirror/Quill/Lexical — ChatGPT, Claude, Gemini) via `execCommand('insertText')`, and
-plain `<textarea>`/`<input>` behind React via the native value setter plus `input`/`change`
-events. A naive `el.value = …` does **not** work on these framework-controlled inputs, which
-is why this dance is necessary.
+The injector supports two input types: rich contenteditable editors (ProseMirror, Quill,
+Lexical) via `execCommand('insertText')`, and plain `<textarea>`/`<input>` elements via the
+native value setter followed by `input` and `change` events. Assigning `element.value`
+directly does not work with these framework-controlled inputs.
 
-### Known caveats
-- **Google sign-in (Gemini)** may be refused inside an embedded view ("this browser or app
-  may not be secure"). It sometimes works; if it doesn't, Gemini is the one pane that may not
-  stay logged in.
-- Status dots are best-effort signals: `sending` while loading/injecting, `loaded` when the
-  page settles or the prompt is submitted, `error` if the input/button couldn't be found or a
-  load failed. "loaded" means the prompt was *submitted*, not that a full answer has rendered.
-- A `<webview>` hidden via `display:none` (collapsed/inactive panes) keeps its session alive
-  but doesn't paint; it repaints when shown again.
+## Architecture
+
+- **`main.js`** — the Electron main process. Creates a single `BrowserWindow`
+  (`contextIsolation: true`, `nodeIntegration: false`, `webviewTag: true`), loads
+  `renderer.html`, and quits when the window closes. It intercepts the per-pane zoom keys
+  (`Ctrl +/-/0`) before the embedded sites receive them, and clears a service's stored
+  session over IPC.
+- **`preload.js`** — exposes a minimal API to the page via `contextBridge`:
+  `clearSession(paneId)` and a zoom-update subscription. No Node APIs are exposed to the
+  renderer or the embedded sites.
+- **`renderer.html`** — the UI shell. Six `<script>` tags load the integration layer; the
+  shell remains usable in a plain browser, where the integration detects the absence of
+  Electron and leaves placeholders in place.
+- **`electron-integration.js`** — replaces each pane's placeholder with a persistent
+  `<webview>` and wires the shell's hooks (`onPromptSubmit`, `onPaneReload`, `onPaneExpand`,
+  `onSettingsChange`), the status indicators, and the zoom-level badges.
+- **`adapters/*.js`** — one module per service, each defining its URL, session partition,
+  and selectors. `adapters/_shared.js` contains the shared injection logic.
+
+The four webviews are created once and never removed from the DOM; expanding a pane and the
+narrow-window tab switcher only toggle CSS visibility, so sessions are never torn down. Each
+service uses a dedicated `persist:<service>` partition, which is what allows logins to
+survive restarts.
+
+## Limitations
+
+- Google may decline sign-in within an embedded view ("this browser or app may not be
+  secure"). This is a Google restriction on embedded browsers; when it occurs, the Gemini
+  pane may not stay signed in.
+- The status indicators are heuristic: a pane reads as loading while a page or injection is
+  in progress, loaded once it settles or a prompt is submitted, and error if a selector
+  cannot be found or a page fails to load. "Loaded" indicates the prompt was submitted, not
+  that a response has finished rendering.
+- A webview hidden with `display:none` (a collapsed or inactive pane) retains its session
+  but does not render until shown again.
