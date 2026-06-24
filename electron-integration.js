@@ -31,14 +31,20 @@
   var idToPane = {};   // guest webContents id -> paneId
   var errored = {};    // paneId -> did the current load cycle fail?
 
-  // Styles for the zoom-% badge shown in each pane header.
-  var zoomStyle = document.createElement('style');
-  zoomStyle.textContent =
+  // Styles for the zoom-% badge and the disabled-pane state.
+  var injectedStyle = document.createElement('style');
+  injectedStyle.textContent =
     '.zoom-pct{font:500 11px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text-faint);' +
     'background:rgba(255,255,255,.03);border:1px solid var(--border-soft);border-radius:6px;' +
     'padding:2px 6px;min-width:42px;text-align:center;cursor:pointer;}' +
-    '.zoom-pct:hover{color:var(--text);border-color:var(--border);}';
-  document.head.appendChild(zoomStyle);
+    '.zoom-pct:hover{color:var(--text);border-color:var(--border);}' +
+    '.pane.is-disabled webview{filter:grayscale(1);opacity:.4;}' +
+    '.pane.is-disabled .pane-body::after{content:"Disabled — not receiving prompts";' +
+    'position:absolute;top:10px;left:50%;transform:translateX(-50%);padding:4px 10px;' +
+    'border-radius:100px;background:rgba(20,21,25,.92);border:1px solid var(--border);' +
+    'color:var(--text-dim);font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace;' +
+    'white-space:nowrap;pointer-events:none;z-index:3;}';
+  document.head.appendChild(injectedStyle);
 
   // ---- 1) Mount a <webview> into each pane body, replacing the placeholder ----
   PANES.forEach(function (id) {
@@ -122,6 +128,15 @@
     });
   });
 
+  // Reflect each pane's enabled/disabled state visually (dim + "Disabled" badge).
+  function reflectEnabled() {
+    PANES.forEach(function (id) {
+      var pane = document.querySelector('.pane[data-pane="' + id + '"]');
+      if (pane) pane.classList.toggle('is-disabled', !enabled[id]);
+    });
+  }
+  reflectEnabled();
+
   // ---- 2) Wire the shell's hooks --------------------------------------------
 
   // Broadcast one prompt into every enabled pane.
@@ -174,6 +189,7 @@
           enabled[id] = !!config.all[id].enabled;
         }
       }
+      reflectEnabled();
     }
 
     if (config.type === 'clearSession') {
