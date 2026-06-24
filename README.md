@@ -1,18 +1,31 @@
 # MultiAI
 
-A desktop app for macOS that runs **ChatGPT, Gemini, Grok, and Claude** side by side in a
-single window. A prompt typed in the shared composer is sent to all four services at once,
-and each pane keeps its own ongoing conversation. You sign in to each service once;
-sessions persist between launches.
+A desktop app that runs **ChatGPT, Gemini, Grok, and Claude** side by side in a single
+window. A prompt typed in the shared composer is sent to all four services at once, and
+each pane keeps its own ongoing conversation. You sign in to each service once; sessions
+persist between launches.
 
 Built with Electron. This is a personal, local tool — it is not packaged or distributed.
 
 ## Requirements
 
-- macOS
-- [Node.js](https://nodejs.org) 18 or newer (the LTS installer is recommended)
+- Windows, macOS, or Linux (Electron is cross-platform). The app was developed and used on
+  macOS; the `MultiAI.command` launcher is macOS-only, but every platform can run it with
+  `npm start`.
+- [Node.js](https://nodejs.org) 18 or newer (the LTS release is recommended).
 
-To confirm Node.js is installed, run `node --version` in Terminal.
+Check whether Node.js is already installed:
+
+```bash
+node --version
+```
+
+If the command is not found, install Node.js using the official installer from
+[nodejs.org](https://nodejs.org), or a package manager:
+
+- **macOS** (Homebrew): `brew install node`
+- **Windows** (winget): `winget install OpenJS.NodeJS.LTS`
+- **Linux**: use your distribution's package manager, or [nvm](https://github.com/nvm-sh/nvm)
 
 ## Installation
 
@@ -37,10 +50,10 @@ Start the app from the project directory:
 npm start
 ```
 
-For convenience you can instead double-click **`MultiAI.command`** in Finder, which runs
-the steps above and launches the app; drag it onto the Dock for quick access. Because the
-script is unsigned, the first launch may require right-clicking it and choosing **Open** to
-clear macOS Gatekeeper.
+On macOS, you can instead double-click **`MultiAI.command`** in Finder, which runs the steps
+above and launches the app; drag it onto the Dock for quick access. Because the script is
+unsigned, the first launch may require right-clicking it and choosing **Open** to clear
+macOS Gatekeeper. (This launcher is macOS-only; on Windows and Linux, use `npm start`.)
 
 On first launch, each pane shows the corresponding service's sign-in page. Sign in to each
 one; logins are stored per service and persist across restarts.
