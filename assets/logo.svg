@@ -1,13 +1,16 @@
 <svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MultiAI logo">
   <defs>
-    <clipPath id="rounded"><rect width="96" height="96" rx="22"/></clipPath>
+    <clipPath id="rounded"><rect width="96" height="96" rx="26"/></clipPath>
   </defs>
   <g clip-path="url(#rounded)">
-    <rect width="96" height="96" fill="#0c0d10"/>
-    <rect x="3"  y="3"  width="42" height="42" rx="6" fill="#10a37f"/> <!-- ChatGPT -->
-    <rect x="51" y="3"  width="42" height="42" rx="6" fill="#4285f4"/> <!-- Gemini -->
-    <rect x="3"  y="51" width="42" height="42" rx="6" fill="#9b8cff"/> <!-- Grok -->
-    <rect x="51" y="51" width="42" height="42" rx="6" fill="#d97757"/> <!-- Claude -->
+    <rect width="96" height="96" fill="#000000"/>
+    <!-- Top-left quadrant: ChatGPT (green) → Gemini (blue), split along the 135° diagonal -->
+    <polygon points="0,0 48,0 0,48" fill="#10a37f"/>
+    <polygon points="48,0 48,48 0,48" fill="#4285f4"/>
+    <!-- Bottom-right quadrant: Grok (purple) → Claude (orange), split along the 135° diagonal -->
+    <polygon points="48,48 96,48 48,96" fill="#9b8cff"/>
+    <polygon points="96,48 96,96 48,96" fill="#d97757"/>
+    <!-- Top-right and bottom-left quadrants stay black (the background) -->
   </g>
-  <rect x="0.5" y="0.5" width="95" height="95" rx="21.5" stroke="#ffffff" stroke-opacity="0.08"/>
+  <rect x="0.5" y="0.5" width="95" height="95" rx="25.5" stroke="#ffffff" stroke-opacity="0.08"/>
 </svg>
