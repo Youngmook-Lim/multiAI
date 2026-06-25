@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" width="112" alt="MultiAI logo">
+  <img src="assets/logo-mark.svg" width="112" alt="MultiAI logo">
 </p>
 
 # MultiAI
