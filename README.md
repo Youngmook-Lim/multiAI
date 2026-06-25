@@ -130,3 +130,14 @@ survive restarts.
   that a response has finished rendering.
 - A webview hidden with `display:none` (a collapsed or inactive pane) retains its session
   but does not render until shown again.
+
+## Disclaimer
+
+This is an unofficial, personal project. It is not affiliated with, endorsed by, or
+sponsored by OpenAI, Google, xAI, or Anthropic. "ChatGPT", "Gemini", "Grok", and "Claude"
+are trademarks of their respective owners. Automating these services' web interfaces may be
+contrary to their terms of service; use this software at your own risk.
+
+## License
+
+Released under the [MIT License](LICENSE).
