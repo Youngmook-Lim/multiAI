@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.svg" width="112" alt="MultiAI logo">
+</p>
+
 # MultiAI
 
 A desktop app that runs **ChatGPT, Gemini, Grok, and Claude** side by side in a single
